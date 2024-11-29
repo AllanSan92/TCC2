@@ -21,7 +21,7 @@ load_dotenv()
 
 GPIO.setwarnings(False)  # Desabilita as advertências de uso dos pinos GPIO
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 # Configurar a chave secreta a partir do .env
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
@@ -29,7 +29,7 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY')
 # Configuração do banco de dados
 db_config = {
     'user': 'root',
-    'password': 'AllanSenhaDB5478@@&1',
+    'password': '2816',
     'host': 'localhost',
     'database': 'iot_security',
 }
@@ -46,7 +46,7 @@ secure_channel = MultiTrustCore(path_to_executable='./workspace/multosI2CInterfa
 
 # Função para validar a força da senha
 def validar_senha(senha):
-    padrao = r'^(?=.[A-Z])(?=.[a-z])(?=.\d)(?=.[@$!%?&])[A-Za-z\d@$!%?&]{8,}$'
+    padrao = r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
     return bool(re.match(padrao, senha))
 
 # Função para criptografar a senha
@@ -192,10 +192,22 @@ def ping_ip(ip, dispositivos):
 
 # Função para listar dispositivos conectados à mesma rede usando threads
 def listar_dispositivos():
-    sub_rede = "192.168.0."  # Altere para a sub-rede da sua rede local
+    sub_rede = "172.20.10."  # Altere para a sub-rede da sua rede local
     dispositivos = []
     threads = []
     queue = Queue()
+
+    def scan_dispositivo(ip):
+        nm = nmap.PortScanner()
+        try:
+            nm.scan(hosts=ip, arguments='-sn')  # -sn faz um "ping scan" sem escanear portas
+            if nm.all_hosts():
+                dispositivos.append({
+                    'ip': ip,
+                    'status': nm[ip].state()
+                })
+        except Exception as e:
+            print(f"Erro ao escanear {ip}: {e}")
 
     # Criar threads para varrer os IPs
     for i in range(1, 255):
@@ -251,6 +263,39 @@ def bloquear_ip(ip):
         print(f"[ERRO] Falha ao bloquear IP {ip}: {e}")
         return False
 
+# Defina o caminho do arquivo de logs
+LOGS_PATH = "logs.txt"
+
+# Função para ler logs
+def ler_logs():
+    """Lê os logs do arquivo e retorna como uma lista de dicionários."""
+    logs = []
+    if os.path.exists(LOGS_PATH):  # Verifica se o arquivo de logs existe
+        with open(LOGS_PATH, "r") as f:
+            for linha in f:
+                # Dividir o log em partes (Ex.: Data, IP, Ação)
+                partes = linha.strip().split(" - ")
+                if len(partes) == 3:  # Certifique-se de que o log está no formato correto
+                    logs.append({"data": partes[0], "ip": partes[1], "acao": partes[2]})
+    return logs
+    
+# Função para adicionar um log
+def adicionar_log(mensagem):
+    """Adiciona uma nova mensagem ao arquivo de log."""
+    with open(LOGS_PATH, "a") as f:
+        f.write(mensagem + "\n")
+
+# Função para listar os logs
+def listar_logs():
+    """Retorna os logs em formato de lista de dicionários."""
+    logs = []
+    if os.path.exists(LOGS_PATH):
+        with open(LOGS_PATH, "r") as f:
+            for linha in f:
+                partes = linha.strip().split(" - ")
+                if len(partes) == 3:
+                    logs.append({"data": partes[0], "ip": partes[1], "acao": partes[2]})
+    return logs
 
 @app.route('/')
 def index():
@@ -289,20 +334,16 @@ def login():
     else:
         return jsonify(autenticacao_resultado), 400
 
-@app.route('/visualizar_logs')
+@app.route('/visualizar_logs', methods=['GET'])
 def visualizar_logs():
+    """Retorna os logs em formato JSON ou uma mensagem de erro se não houver logs."""
     try:
-        db = mysql.connector.connect(**db_config)
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM logs_conexao ORDER BY data_conexao DESC")
-        logs = cursor.fetchall()
-        return render_template('logs.html', logs=logs)
-    except mysql.connector.Error as err:
-        return f"Erro ao acessar os logs: {err}"
-    finally:
-        if db.is_connected():
-            cursor.close()
-            db.close()
+        logs = ler_logs()  # Chama a função para ler os logs
+        if not logs:
+            return jsonify({"erro": "Nenhum log encontrado."}), 404  # Retorna 404 se não houver logs
+        return jsonify(logs)  # Retorna os logs em formato JSON
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500  # Retorna 500 se ocorrer algum erro
 
 @app.route('/listar_dispositivos', methods=['GET'])
 def listar_dispositivos_ajax():
@@ -337,7 +378,9 @@ def desbloquear_ip():
     except subprocess.CalledProcessError as e:
         return jsonify({"status": "failure", "message": f"Erro ao desbloquear IP {ip}: {e}"})
 
-if _name_ == '_main_':
+
+
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
 
     #app.run(debug=True)

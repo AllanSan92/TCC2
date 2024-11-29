@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Home - Cadastro de Usuário</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #3f51b5;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .sair {
+            background-color: #f44336;
+            border: none;
+            padding: 10px 15px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .sair:hover {
+            background-color: #d32f2f;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #3f51b5;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #303f9f;
+        }
+
+        #ler_rfid_button {
+            background-color: #ff9800;
+            margin-bottom: 15px;
+        }
+
+        #ler_rfid_button:hover {
+            background-color: #e68900;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            background: #f9f9f9;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #qrcode-container img {
+            display: block;
+            margin: 0 auto;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .logs-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logs-container a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Página Inicial</h1>
+        <a href="/logout" class="sair">Sair</a>
+    </header>
+    <main>
+        <p>Bem-vindo à página inicial! Aqui você pode cadastrar novos usuários e visualizar dispositivos conectados.</p>
+
+        <div class="logs-container">
+            <a href="{{ url_for('visualizar_logs') }}">
+                <button>Visualizar Logs de Conexão</button>
+            </a>
+        </div>
+
+        <h2>Dispositivos Conectados</h2>
+        <button id="atualizar-dispositivos">Atualizar Lista</button>
+        <ul id="lista-dispositivos"></ul>
+
+        <h2>Cadastro de Novo Usuário</h2>
+        <form id="cadastro-form">
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" required>
+
+            <label for="rfid_id">Número do RFID:</label>
+            <input type="text" id="rfid_id" name="rfid_id" readonly required>
+
+            <button id="ler_rfid_button" type="button">Ler RFID</button>
+
+            <label for="senha">Senha:</label>
+            <input type="password" id="senha" name="senha" required>
+
+            <button type="submit">Cadastrar</button>
+        </form>
+
+        <h3>QR Code 2FA:</h3>
+        <div id="qrcode-container"></div>
+    </main>
+    <footer>
+        © 2024 - Sistema Seguro com IoT
+    </footer>
+
+    <script>
+        // Função para ler o RFID
+        function lerRFID() {
+            $.post('/ler_rfid', function(data) {
+                if (data.status === 'success' && data.rfid_id) {
+                    $('#rfid_id').val(data.rfid_id);
+                    alert("RFID lido com sucesso: " + data.rfid_id);
+                } else {
+                    alert("Erro ao ler o RFID: " + (data.message || "Desconhecido"));
+                }
+            }).fail(function() {
+                alert("Erro ao comunicar com o servidor para ler o RFID.");
+            });
+        }
+
+        // Função para atualizar a lista de dispositivos conectados
+        function atualizarDispositivos() {
+            $('#lista-dispositivos').html('<li>Carregando...</li>');
+
+            $.get('/listar_dispositivos', function(data) {
+                $('#lista-dispositivos').empty();
+
+                if (data.length > 0) {
+                    data.forEach(function(dispositivo) {
+                        $('#lista-dispositivos').append('<li>IP: ' + dispositivo.ip + ' - Status: ' + dispositivo.status + '</li>');
+                    });
+                } else {
+                    $('#lista-dispositivos').append('<li>Nenhum dispositivo encontrado.</li>');
+                }
+            }).fail(function() {
+                $('#lista-dispositivos').html('<li>Erro ao carregar dispositivos.</li>');
+            });
+        }
+
+        // Inicialização da página
+        $(document).ready(function() {
+            $('#atualizar-dispositivos').on('click', function() {
+                atualizarDispositivos();
+            });
+
+            $('#cadastro-form').on('submit', function(e) {
+                e.preventDefault();
+
+                $.ajax({
+                    url: '/cadastro',
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        alert(response.message);
+                        if (response.status === "success") {
+                            const rfid_id = $('#rfid_id').val();
+                            const nome = $('#nome').val();
+                            $('#qrcode-container').html('<img src="/gerar_qrcode/' + rfid_id + '/' + nome + '" alt="QR Code 2FA" style="width: 200px; height: 200px;">');
+                        }
+                    },
+                    error: function() {
+                        alert("Erro ao cadastrar usuário. Tente novamente.");
+                    }
+                });
+            });
+
+            $('#ler_rfid_button').on('click', function() {
+                lerRFID();
+            });
+
+            atualizarDispositivos();
+        });
+    </script>
+</body>
+</html>

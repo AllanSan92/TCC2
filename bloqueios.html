@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bloqueios Ativos</title>
+</head>
+<body>
+    <h1>IPs Bloqueados</h1>
+    <pre>{{ bloqueios }}</pre>
+    <form action="/desbloquear" method="post">
+        <label for="ip">IP para desbloquear:</label>
+        <input type="text" id="ip" name="ip">
+        <button type="submit">Desbloquear</button>
+    </form>
+</body>
+</html>

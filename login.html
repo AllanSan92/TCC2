@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segurança IoT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        h1 {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 300px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #submit {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        #submit:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-section">
+        <h1>Segurança IoT</h1>
+        <h2 style="text-align: center;">Login</h2>
+        <form onsubmit="validateCredentials(event)">
+            <label for="username">Usuário:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Senha:</label>
+            <input type="password" id="password" name="password" required>
+            
+            <label for="rfid-card-id">ID do Cartão RFID:</label>
+            <input type="text" id="rfid-card-id" name="rfid-card-id" required readonly>
+
+            <button type="submit" id="submit" disabled>Entrar</button>
+            <div id="error-message" class="error"></div>
+        </form>
+    </div>
+
+    <div id="sensors-section" class="hidden">
+        <h1>Segurança IoT - Sensores</h1>
+        <div class="sensor-grid">
+            <div class="sensor-container">
+                <span>Câmera</span>
+                <button type="button" onclick="acessarSensor('Câmera', 'Captura imagens e vídeos em tempo real para monitoramento remoto.')">Acessar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = "";
+        const captchaPatterns = ["A7B2C4", "F3G9H1", "J8K6L5", "M2N7P3", "Q4R1S8", "T9U6V2", "W3X5Y7", "Z1A8B6"];
+        let currentCaptcha = captchaPatterns[Math.floor(Math.random() * captchaPatterns.length)];
+
+        function generateCaptcha() {
+            document.getElementById('captcha').textContent = currentCaptcha;
+        }
+
+        function toggleSubmit() {
+            const userInput = document.getElementById('captcha-input').value;
+            const submitButton = document.getElementById('submit');
+            submitButton.disabled = userInput !== currentCaptcha;
+        }
+
+        function validateCredentials(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const rfidCardID = document.getElementById('rfid-card-id').value;
+            const errorMessage = document.getElementById('error-message');
+
+            const validUsers = [
+                { username: 'Allan', password: 'Asm7464' },
+                { username: 'jefferson', password: 'Jjh521*' },
+                { username: 'primal', password: 'Eal672&' }
+            ];
+
+            const user = validUsers.find(user => user.username === username && user.password === password);
+            if (user && rfidCardID) {
+                currentUser = user.username;
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('sensors-section').classList.remove('hidden');
+            } else {
+                errorMessage.textContent = 'Credenciais inválidas ou ID de cartão RFID inválido. Tente novamente.';
+            }
+        }
+
+        // Função para ler o ID do cartão RFID do arquivo
+        function fetchRFID() {
+            fetch('rfid_id.txt')  // O arquivo deve estar disponível para leitura via HTTP
+                .then(response => response.text())
+                .then(data => {
+                    if (data.trim()) {
+                        document.getElementById('rfid-card-id').value = data.trim();
+                    }
+                })
+                .catch(err => console.log('Erro ao ler o arquivo RFID:', err));
+        }
+
+        // Atualiza o campo RFID a cada 2 segundos
+        setInterval(fetchRFID, 2000);
+
+        window.onload = generateCaptcha;
+    </script>
+</body>
+</html>

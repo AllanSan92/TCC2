@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs - Sistema Seguro</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #3f51b5;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .sair {
+            background-color: #f44336;
+            border: none;
+            padding: 10px 15px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .sair:hover {
+            background-color: #d32f2f;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+        }
+
+        .log-entry {
+            background-color: #f9f9f9;
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Visualizar Logs</h1>
+        <a href="/home" class="sair">Voltar à Página Inicial</a>
+    </header>
+    <main>
+        <h2>Logs do Sistema</h2>
+
+        <!-- Exibir os logs dinamicamente -->
+        <div id="logs-container">
+            {% if logs %}
+                {% for log in logs %}
+                    <div class="log-entry">
+                        <p>{{ log }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Nenhum log encontrado.</p>
+            {% endif %}
+        </div>
+    </main>
+    <footer>
+        © 2024 - Sistema Seguro com IoT
+    </footer>
+</body>
+</html>
